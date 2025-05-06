@@ -9,7 +9,10 @@ import (
 func init() {
 	raikiri.Handle(func(w http.ResponseWriter, r *http.Request) {
 
-		conn, err := raikiri.NewPgConnectionBuilder().Build()
+		connectionSetup := raikiri.NewSqlConnectionSetup()
+		connectionSetup.ConnectionType("postgres")
+
+		conn, err := connectionSetup.Init()
 
 		if err != nil {
 			panic(err)

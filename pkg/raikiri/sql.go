@@ -10,40 +10,46 @@ import (
 	"github.com/rajatjindal/wasi-go-sdk/pkg/wasihttp"
 )
 
-type PostgresConnection struct {
+type SqlConnection struct {
 	connection_id string
 }
 
-type PgConnectionBuilder struct {
-	connection_string_secret_name string
+type SqlConnectionBuilder struct {
+	connectionType             string
+	connectionStringSecretName string
 }
 
 var Handle = wasihttp.Handle
 
-func NewPgConnectionBuilder() *PgConnectionBuilder {
+func NewSqlConnectionSetup() *SqlConnectionBuilder {
 
-	return &PgConnectionBuilder{}
+	return &SqlConnectionBuilder{}
 }
 
-func (builder *PgConnectionBuilder) ConnectionStringSecretName(connection_string_secret_name string) *PgConnectionBuilder {
-	builder.connection_string_secret_name = connection_string_secret_name
+func (builder *SqlConnectionBuilder) ConnectionType(connectionType string) *SqlConnectionBuilder {
+	builder.connectionType = connectionType
 	return builder
 }
 
-func (builder *PgConnectionBuilder) Build() (*PostgresConnection, error) {
+func (builder *SqlConnectionBuilder) ConnectionStringSecretName(connectionStringSecretName string) *SqlConnectionBuilder {
+	builder.connectionStringSecretName = connectionStringSecretName
+	return builder
+}
+
+func (builder *SqlConnectionBuilder) Init() (*SqlConnection, error) {
 
 	client := wasihttp.NewClient()
-	req, err := http.NewRequest(http.MethodGet, "https://raikiri.db/postgres", nil)
+	req, err := http.NewRequest(http.MethodGet, "https://raikiri.db/"+builder.connectionType, nil)
 
 	if err != nil {
 		return nil, err
 	}
 
-	if builder.connection_string_secret_name == "" {
-		builder.connection_string_secret_name = "POSTGRES_CONNECTION_STRING"
+	if builder.connectionStringSecretName == "" {
+		builder.connectionStringSecretName = "POSTGRES_CONNECTION_STRING"
 	}
 
-	req.Header.Set("Connection-String-Secret-Name", builder.connection_string_secret_name)
+	req.Header.Set("Connection-String-Secret-Name", builder.connectionStringSecretName)
 
 	resp, err := client.Do(req)
 
@@ -57,10 +63,10 @@ func (builder *PgConnectionBuilder) Build() (*PostgresConnection, error) {
 		return nil, err
 	}
 
-	return &PostgresConnection{connection_id: string(connection_id)}, nil
+	return &SqlConnection{connection_id: string(connection_id)}, nil
 }
 
-func (connection *PostgresConnection) ExecuteSql(query string, params []interface{}) (int, error) {
+func (connection *SqlConnection) ExecuteSql(query string, params []interface{}) (int, error) {
 
 	var value struct {
 		Query  string
@@ -110,7 +116,7 @@ func (connection *PostgresConnection) ExecuteSql(query string, params []interfac
 	return countInt, nil
 }
 
-func (connection *PostgresConnection) QuerySql(query string, params []interface{}) ([]byte, error) {
+func (connection *SqlConnection) QuerySql(query string, params []interface{}) ([]byte, error) {
 
 	var value struct {
 		Query  string
