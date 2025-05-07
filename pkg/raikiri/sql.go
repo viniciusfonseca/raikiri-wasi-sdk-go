@@ -159,3 +159,7 @@ func (connection *SqlConnection) QuerySql(query string, params []interface{}) ([
 
 	return respBody, nil
 }
+
+func SqlParams(params ...interface{}) []interface{} {
+	return params
+}

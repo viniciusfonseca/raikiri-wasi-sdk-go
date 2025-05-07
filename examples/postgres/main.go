@@ -18,9 +18,10 @@ func init() {
 			panic(err)
 		}
 
-		conn.ExecuteSql("INSERT INTO accounts (id, balance) VALUES ($1, $2);", []interface{}{"1", 0})
+		p := raikiri.SqlParams
+		conn.ExecuteSql("INSERT INTO accounts (id, balance) VALUES ($1, $2);", p("1", 0))
 
-		accounts, err := conn.QuerySql("SELECT balance FROM accounts;", nil)
+		accounts, err := conn.QuerySql("SELECT id, balance FROM accounts;", p())
 
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
